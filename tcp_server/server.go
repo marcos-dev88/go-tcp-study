@@ -12,7 +12,7 @@ func Handle(conn net.Conn) {
 	for {
 		decoder := json.NewDecoder(conn)
 
-		msg := struct{
+		msg := struct {
 			Message string `json:"message"`
 		}{}
 
@@ -22,11 +22,6 @@ func Handle(conn net.Conn) {
 			log.Printf("error: %v", err)
 		}
 
-
 		fmt.Printf("%s \n", msg.Message)
-	}
-	err := conn.Close()
-	if err != nil {
-		log.Fatalf("error: %v", err)
 	}
 }
