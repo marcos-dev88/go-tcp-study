@@ -3,6 +3,7 @@ package tcp_server
 import (
 	"bufio"
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"log"
 	"net"
@@ -13,27 +14,36 @@ import (
 
 type Message struct {
 	Value     string `json:"value"`
-	IsWorking bool   `json:"is_working"`
+	IsWorking string   `json:"is_working"`
 }
 
 func Handle(conn net.Conn) {
 
-	byteDataCH, formattedBodyCH := make(chan []byte, 3072), make(chan string, 2)
+	byteDataCH, formattedBodyCH, bodyJsonData := make(chan []byte, 3072), make(chan string, 2), make(chan []byte, 3072)
 
 	wg := sync.WaitGroup{}
-	wg.Add(2)
-
+	wg.Add(3)
 	defer wg.Wait()
-	defer conn.Close()
+
+	defer func(conn net.Conn) {
+		err := conn.Close()
+		if err != nil {
+			log.Fatal(err)
+		}
+	}(conn)
 
 	go getByteDataFromConn(conn, byteDataCH, &wg)
 	go formatData(byteDataCH, formattedBodyCH, &wg)
+	go getDataFromBody(formattedBodyCH, bodyJsonData, &wg)
 
-	body := getDataFromBody(<-formattedBodyCH)
+	var m Message
+	err := json.Unmarshal(<-bodyJsonData, &m)
 
-	if len(body) != 0 {
-		fmt.Printf("%v | %T", body["value"], body["value"])
+	if err != nil {
+
 	}
+
+	fmt.Printf("%v\n", m)
 
 }
 
@@ -73,8 +83,10 @@ func getByteDataFromConn(conn net.Conn, inputData chan []byte, newWg *sync.WaitG
 	close(inputData)
 }
 
-func getDataFromBody(body string) map[string]interface{} {
-	dataSlice := strings.Split(body, ",")
+func getDataFromBody(body <-chan string, bodyData chan []byte, newWg *sync.WaitGroup) {
+	defer newWg.Done()
+
+	dataSlice := strings.Split(<-body, ",")
 
 	var bodyMap = make(map[string]interface{})
 	var rgex = regexp.MustCompile(`("\w+"): (.*)`)
@@ -83,8 +95,14 @@ func getDataFromBody(body string) map[string]interface{} {
 		data := rgex.FindStringSubmatch(dataSlice[i])
 		if data != nil {
 			key := strings.Replace(data[1], `"`, "", -1)
-			bodyMap[key] = data[2]
+			value := strings.Replace(data[2], `"`, "", -1)
+			bodyMap[key] = value
 		}
 	}
-	return bodyMap
+
+	if len(bodyMap) != 0 {
+		returnedBytes, _ := json.Marshal(bodyMap)
+		bodyData <- returnedBytes
+		defer close(bodyData)
+	}
 }
