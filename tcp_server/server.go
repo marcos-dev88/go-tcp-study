@@ -19,7 +19,8 @@ type Message struct {
 
 func Handle(conn net.Conn) {
 
-	byteDataCH, formattedBodyCH, bodyJsonData := make(chan []byte, 3072), make(chan string, 2), make(chan []byte, 3072)
+	var m Message
+	byteDataCH, stringBodyCH, bodyJsonData := make(chan []byte, 3072), make(chan string, 2), make(chan []byte, 3072)
 
 	wg := sync.WaitGroup{}
 	wg.Add(3)
@@ -32,22 +33,25 @@ func Handle(conn net.Conn) {
 		}
 	}(conn)
 
-	go getByteDataFromConn(conn, byteDataCH, &wg)
-	go formatData(byteDataCH, formattedBodyCH, &wg)
-	go getDataFromBody(formattedBodyCH, bodyJsonData, &wg)
+	go getHTTPPostBody(conn, byteDataCH, &wg)
+	go formatBody(byteDataCH, stringBodyCH, &wg)
+	go getJsonData(stringBodyCH, bodyJsonData, &wg)
 
-	var m Message
-	err := json.Unmarshal(<-bodyJsonData, &m)
 
-	if err != nil {
-
+	select {
+	case returnedBody := <-bodyJsonData:
+		err := json.Unmarshal(returnedBody, &m)
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
 
-	fmt.Printf("%v\n", m)
-
+	fmt.Printf("%v\n", m.Value)
 }
 
-func formatData(inputData <-chan []byte, outputData chan string, newWg *sync.WaitGroup) {
+// formatBody: Receiving all HTTP POST Request data,
+// it "filter" the body from request and send it to an output string channel
+func formatBody(inputData <-chan []byte, outputData chan string, newWg *sync.WaitGroup) {
 	defer newWg.Done()
 
 	var rgex = regexp.MustCompile(`Length: \d+(.*)`)
@@ -62,7 +66,8 @@ func formatData(inputData <-chan []byte, outputData chan string, newWg *sync.Wai
 	close(outputData)
 }
 
-func getByteDataFromConn(conn net.Conn, inputData chan []byte, newWg *sync.WaitGroup) {
+// getHTTPPostBody: It gets all scanned data sent by HTTP POST request and sends to channel what accepts []byte
+func getHTTPPostBody(conn net.Conn, inputData chan []byte, newWg *sync.WaitGroup) {
 	defer newWg.Done()
 
 	sc := bufio.NewScanner(conn)
@@ -83,7 +88,8 @@ func getByteDataFromConn(conn net.Conn, inputData chan []byte, newWg *sync.WaitG
 	close(inputData)
 }
 
-func getDataFromBody(body <-chan string, bodyData chan []byte, newWg *sync.WaitGroup) {
+// getJsonData: It gets data from body already formatted and sends data to channel what accepts []byte
+func getJsonData(body <-chan string, bodyJSON chan []byte, newWg *sync.WaitGroup) {
 	defer newWg.Done()
 
 	dataSlice := strings.Split(<-body, ",")
@@ -102,7 +108,7 @@ func getDataFromBody(body <-chan string, bodyData chan []byte, newWg *sync.WaitG
 
 	if len(bodyMap) != 0 {
 		returnedBytes, _ := json.Marshal(bodyMap)
-		bodyData <- returnedBytes
-		defer close(bodyData)
+		bodyJSON <- returnedBytes
+		defer close(bodyJSON)
 	}
 }
