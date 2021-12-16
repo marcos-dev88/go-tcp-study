@@ -10,7 +10,7 @@ import (
 
 type Message struct {
 	Value     string `json:"value"`
-	IsWorking string   `json:"is_working"`
+	IsWorking bool   `json:"is_working,string"`
 }
 
 func Handle(conn net.Conn) {
@@ -43,5 +43,5 @@ func Handle(conn net.Conn) {
 		}
 	}
 
-	fmt.Printf("%v\n", m.Value)
+	fmt.Printf("value -> %v | type -> %T\n", m.IsWorking, m.IsWorking)
 }
