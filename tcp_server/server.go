@@ -29,12 +29,12 @@ func Handle(conn net.Conn) {
 		}
 	}(conn)
 
-	connHTTP := NewConnHTTP(conn, &byteDataCH, &stringBodyCH)
+	connHTTP := NewConnHTTP(conn, &byteDataCH, &bodyJsonData, &stringBodyCH)
 	config := NewConfig(*connHTTP)
 
 	go connHTTP.GetBody(&wg)
-	go config.FormatBody(stringBodyCH, &wg)
-	go connHTTP.GetJsonBody(bodyJsonData, &wg)
+	go config.FormatBody(&wg)
+	go connHTTP.GetJsonBody(&wg)
 
 	select {
 	case returnedBody := <-bodyJsonData:
