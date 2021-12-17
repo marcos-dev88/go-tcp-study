@@ -30,10 +30,11 @@ func Handle(conn net.Conn) {
 	}(conn)
 
 	config := NewConfig(conn)
+	connHTTP := NewConnHTTP(conn)
 
-	go config.GetHTTPPostBody(byteDataCH, &wg)
+	go connHTTP.GetBody(byteDataCH, &wg)
 	go config.FormatBody(byteDataCH, stringBodyCH, &wg)
-	go config.GetJsonData(stringBodyCH, bodyJsonData, &wg)
+	go connHTTP.GetJsonBody(stringBodyCH, bodyJsonData, &wg)
 
 	select {
 	case returnedBody := <-bodyJsonData:
