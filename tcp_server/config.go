@@ -21,7 +21,7 @@ func NewConfig(connHTTP ConnHTTP) Config {
 
 // FormatBody - Receiving all HTTP POST Request data,
 // it "filter" the body from request and send it to an output string channel
-func (c Config) FormatBody(outputData chan string, newWg *sync.WaitGroup) {
+func (c Config) FormatBody(newWg *sync.WaitGroup) {
 	defer newWg.Done()
 
 	var rgex = regexp.MustCompile(`Length: \d+(.*)`)
@@ -31,7 +31,7 @@ func (c Config) FormatBody(outputData chan string, newWg *sync.WaitGroup) {
 	if dataBody != nil {
 		returnData := strings.Replace(dataBody[1], "{", "", -1)
 		returnData = strings.Replace(returnData, "}", "", -1)
-		outputData <- returnData
+		*c.connHTTP.StringBody <- returnData
 	}
-	close(outputData)
+	close(*c.connHTTP.StringBody)
 }
