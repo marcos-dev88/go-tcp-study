@@ -13,8 +13,8 @@ import (
 
 type (
 	HTTPPost interface {
-		GetBody(inputData chan []byte, newWg *sync.WaitGroup)
-		GetJsonBody(body <-chan string, bodyJSON chan []byte, newWg *sync.WaitGroup)
+		GetBody( newWg *sync.WaitGroup)
+		GetJsonBody(bodyJSON chan []byte, newWg *sync.WaitGroup)
 	}
 
 	HTTPData interface {
@@ -25,15 +25,17 @@ type (
 
 type ConnHTTP struct {
 	Conn net.Conn
+	Body *chan []byte
+	StringBody *chan string
 }
 
-func NewConnHTTP(conn net.Conn) ConnHTTP {
-	return ConnHTTP{Conn: conn}
+func NewConnHTTP(conn net.Conn, body *chan []byte, stringBody *chan string) *ConnHTTP {
+	return &ConnHTTP{Conn: conn, Body: body, StringBody: stringBody}
 }
 
 
 // GetBody - It gets all scanned data sent by HTTP POST request and sends to channel what accepts []byte
-func (c ConnHTTP) GetBody(inputData chan []byte, newWg *sync.WaitGroup) {
+func (c *ConnHTTP) GetBody(newWg *sync.WaitGroup) {
 	defer newWg.Done()
 
 	sc := bufio.NewScanner(c.Conn)
@@ -50,15 +52,15 @@ func (c ConnHTTP) GetBody(inputData chan []byte, newWg *sync.WaitGroup) {
 		log.Fatal(err)
 	}
 
-	inputData <- dataBytes
-	close(inputData)
+	*c.Body <- dataBytes
+	close(*c.Body)
 }
 
 // GetJsonBody - It gets data from body already formatted and sends data to channel what accepts []byte
-func (c ConnHTTP) GetJsonBody(body <-chan string, bodyJSON chan []byte, newWg *sync.WaitGroup) {
+func (c *ConnHTTP) GetJsonBody(bodyJSON chan []byte, newWg *sync.WaitGroup) {
 	defer newWg.Done()
 
-	dataSlice := strings.Split(<-body, ",")
+	dataSlice := strings.Split(<-*c.StringBody, ",")
 
 	var bodyMap = make(map[string]interface{})
 	var rgex = regexp.MustCompile(`("\w+"): (.*)`)
