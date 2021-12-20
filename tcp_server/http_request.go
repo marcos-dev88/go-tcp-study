@@ -1,82 +1,125 @@
 package tcp_server
 
 import (
-	"bufio"
-	"bytes"
 	"encoding/json"
+	"errors"
+	"fmt"
+	"io"
 	"log"
 	"net"
 	"regexp"
 	"strings"
-	"sync"
 )
 
 type (
-	HTTPPost interface {
-		GetBody(newWg *sync.WaitGroup)
-		GetJsonBody(newWg *sync.WaitGroup)
+	HTTPJson interface {
+		GetJsonBody() []byte
 	}
 
-	HTTPData interface {
+	DataConnHTTP interface {
+		GetHTTPData() HTTPData
+	}
+
+	HTTPParams interface {
 		GetURL() string
+		GetBody() []byte
 		GetHeaders() map[string]string
 	}
 )
 
-type ConnHTTP struct {
-	Conn       net.Conn
-	Body       *chan []byte
-	JsonBody   *chan []byte
-	StringBody *chan string
+type (
+	ConnHTTP struct {
+		Conn net.Conn
+	}
+
+	HTTPData struct {
+		Data []byte
+	}
+)
+
+func NewConnHTTP(conn net.Conn) ConnHTTP {
+	return ConnHTTP{Conn: conn}
 }
 
-func NewConnHTTP(conn net.Conn, body *chan []byte, jsonBody *chan []byte, stringBody *chan string) *ConnHTTP {
-	return &ConnHTTP{Conn: conn, Body: body, JsonBody: jsonBody, StringBody: stringBody}
+func NewHTTPRequest(data []byte) HTTPData {
+	return HTTPData{Data: data}
 }
 
-// GetBody - It gets all scanned data sent by HTTP POST request and sends to channel what accepts []byte
-func (c *ConnHTTP) GetBody(newWg *sync.WaitGroup) {
-	defer newWg.Done()
+// GetHTTPData - It gets all scanned data sent by HTTP POST request and sends to channel what accepts []byte
+func (c ConnHTTP) GetHTTPData() HTTPData {
+	buffer := make([]byte, 3072)
 
-	sc := bufio.NewScanner(c.Conn)
+	for {
+		n, err := c.Conn.Read(buffer)
 
-	var dataBytes = make([]byte, 3072)
-	for sc.Scan() {
-		dataBytes = append(dataBytes, sc.Bytes()...)
-		if bytes.Contains(dataBytes, []byte("}")) {
+		if err != nil {
+			n = 0
+			if errors.Is(err, io.EOF) {
+				break
+			}
+			log.Printf("Read error: %s", err)
+		}
+
+		if len(buffer) > n {
 			break
 		}
-	}
 
-	if err := sc.Err(); err != nil {
-		log.Fatal(err)
 	}
+	return NewHTTPRequest(buffer)
+}
 
-	*c.Body <- dataBytes
-	close(*c.Body)
+func (h HTTPData) GetURL() string {
+
+	httpData := h.GetBody()
+
+	fmt.Println(httpData)
+
+	return ""
+}
+
+func (h HTTPData) GetBody() []byte {
+	var rgex = regexp.MustCompile(`{([\s\S]*)$`)
+
+	stringLine := string(h.Data)
+
+	dataBody := rgex.FindStringSubmatch(stringLine)
+	if dataBody != nil {
+		returnData := strings.Replace(dataBody[1], "{", "", -1)
+		returnData = strings.Replace(returnData, "}", "", -1)
+		return []byte(returnData)
+	}
+	return nil
 }
 
 // GetJsonBody - It gets data from body already formatted and sends data to channel what accepts []byte
-func (c *ConnHTTP) GetJsonBody(newWg *sync.WaitGroup) {
-	defer newWg.Done()
+func (h HTTPData) GetJsonBody() []byte {
 
-	dataSlice := strings.Split(<-*c.StringBody, ",")
+	stringedBody := string(h.GetBody())
 
+	dataSlice := strings.Split(stringedBody, ",")
 	var bodyMap = make(map[string]interface{})
+	var bodyMapChan = make(chan map[string]interface{})
+
 	var rgex = regexp.MustCompile(`("\w+"): (.*)`)
 
-	for i := 0; i < len(dataSlice); i++ {
-		data := rgex.FindStringSubmatch(dataSlice[i])
-		if data != nil {
-			key := strings.Replace(data[1], `"`, "", -1)
-			value := strings.Replace(data[2], `"`, "", -1)
-			bodyMap[key] = value
+	go func() {
+		for i := 0; i < len(dataSlice); i++ {
+			data := rgex.FindStringSubmatch(dataSlice[i])
+			if data != nil {
+				key := strings.Replace(data[1], `"`, "", -1)
+				value := strings.Replace(data[2], `"`, "", -1)
+				bodyMap[key] = value
+			}
 		}
-	}
+		bodyMapChan <- bodyMap
+	}()
 
-	if len(bodyMap) != 0 {
-		returnedBytes, _ := json.Marshal(bodyMap)
-		*c.JsonBody <- returnedBytes
-		defer close(*c.JsonBody)
-	}
+	returnedBytes, _ := json.Marshal(<-bodyMapChan)
+	return returnedBytes
+
+}
+
+func (h HTTPData) GetHeaders() map[string]string {
+	some := map[string]string{}
+	return some
 }
