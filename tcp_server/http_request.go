@@ -112,11 +112,12 @@ func (h HTTPData) GetJsonBody() []byte {
 			}
 		}
 		bodyMapChan <- bodyMap
+		close(bodyMapChan)
 	}()
 
 	returnedBytes, _ := json.Marshal(<-bodyMapChan)
-	return returnedBytes
 
+	return returnedBytes
 }
 
 func (h HTTPData) GetHeaders() map[string]string {
