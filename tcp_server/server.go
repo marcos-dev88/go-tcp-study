@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"net"
-	"sync"
 )
 
 type Message struct {
@@ -16,11 +15,6 @@ type Message struct {
 func Handle(conn net.Conn) {
 
 	var m Message
-	byteDataCH, stringBodyCH, bodyJsonData := make(chan []byte, 3072), make(chan string, 2), make(chan []byte, 3072)
-
-	wg := sync.WaitGroup{}
-	wg.Add(3)
-	defer wg.Wait()
 
 	defer func(conn net.Conn) {
 		err := conn.Close()
@@ -29,20 +23,20 @@ func Handle(conn net.Conn) {
 		}
 	}(conn)
 
-	connHTTP := NewConnHTTP(conn, &byteDataCH, &bodyJsonData, &stringBodyCH)
-	config := NewConfig(*connHTTP)
+	connHTTP := NewConnHTTP(conn)
+	httpData := connHTTP.GetHTTPData()
+	body := httpData.GetBody()
 
-	go connHTTP.GetBody(&wg)
-	go config.FormatBody(&wg)
-	go connHTTP.GetJsonBody(&wg)
-
-	select {
-	case returnedBody := <-bodyJsonData:
-		err := json.Unmarshal(returnedBody, &m)
-		if err != nil {
-			log.Fatal(err)
-		}
+	if len(body) == 0 {
+		return
 	}
 
-	fmt.Printf("value -> %v | type -> %T\n", m.IsWorking, m.IsWorking)
+	jsonBody := httpData.GetJsonBody()
+
+	if err := json.Unmarshal(jsonBody, &m); err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Println(m)
+
 }
