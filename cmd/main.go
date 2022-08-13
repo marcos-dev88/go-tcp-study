@@ -1,15 +1,15 @@
 package main
 
 import (
-	server "github.com/marcos-dev88/go-tcp-study/tcp_server"
 	"log"
 	"net"
-)
 
+	server "github.com/marcos-dev88/go-tcp-study/tcp_server"
+)
 
 const (
 	networkType = "tcp"
-	streamPort = ":9000"
+	streamPort  = ":9000"
 )
 
 func main() {

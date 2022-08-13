@@ -100,7 +100,7 @@ func (h HTTPData) GetJsonBody() []byte {
 	var bodyMap = make(map[string]interface{})
 	var bodyMapChan = make(chan map[string]interface{})
 
-	var rgex = regexp.MustCompile(`("\w+"): (.*)`)
+	var rgex = regexp.MustCompile(`("\w+"): ?(.*)`)
 
 	go func() {
 		for i := 0; i < len(dataSlice); i++ {
@@ -111,6 +111,7 @@ func (h HTTPData) GetJsonBody() []byte {
 				bodyMap[key] = value
 			}
 		}
+
 		bodyMapChan <- bodyMap
 		close(bodyMapChan)
 	}()

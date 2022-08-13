@@ -1,0 +1,41 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_OUTPUT_EXCMD	mixed	/number, pattern, mixed, or combineV2/
+!_TAG_OUTPUT_FILESEP	slash	/slash or backslash/
+!_TAG_OUTPUT_MODE	u-ctags	/u-ctags or e-ctags/
+!_TAG_PATTERN_LENGTH_LIMIT	96	/0 for no limit/
+!_TAG_PROC_CWD	/home/marcos_dev/go/src/github.com/marcos-dev88/go-tcp-study/	//
+!_TAG_PROGRAM_AUTHOR	Universal Ctags Team	//
+!_TAG_PROGRAM_NAME	Universal Ctags	/Derived from Exuberant Ctags/
+!_TAG_PROGRAM_URL	https://ctags.io/	/official site/
+!_TAG_PROGRAM_VERSION	5.9.0	/p5.9.20210905.0/
+Conn	tcp_server/http_request.go	/^		Conn net.Conn$/;"	m	struct:tcp_server.ConnHTTP	typeref:typename:net.Conn
+ConnHTTP	tcp_server/http_request.go	/^	ConnHTTP struct {$/;"	s	package:tcp_server
+Data	tcp_server/http_request.go	/^		Data []byte$/;"	m	struct:tcp_server.HTTPData	typeref:typename:[]byte
+DataConnHTTP	tcp_server/http_request.go	/^	DataConnHTTP interface {$/;"	i	package:tcp_server
+GetBody	tcp_server/http_request.go	/^		GetBody() []byte$/;"	n	interface:tcp_server.HTTPParams	typeref:typename:[]byte
+GetBody	tcp_server/http_request.go	/^func (h HTTPData) GetBody() []byte {$/;"	f	struct:tcp_server.HTTPData	typeref:typename:[]byte
+GetHTTPData	tcp_server/http_request.go	/^		GetHTTPData() HTTPData$/;"	n	interface:tcp_server.DataConnHTTP	typeref:typename:HTTPData
+GetHTTPData	tcp_server/http_request.go	/^func (c ConnHTTP) GetHTTPData() HTTPData {$/;"	f	struct:tcp_server.ConnHTTP	typeref:typename:HTTPData
+GetHeaders	tcp_server/http_request.go	/^		GetHeaders() map[string]string$/;"	n	interface:tcp_server.HTTPParams	typeref:typename:map[string]string
+GetHeaders	tcp_server/http_request.go	/^func (h HTTPData) GetHeaders() map[string]string {$/;"	f	struct:tcp_server.HTTPData	typeref:typename:map[string]string
+GetJsonBody	tcp_server/http_request.go	/^		GetJsonBody() []byte$/;"	n	interface:tcp_server.HTTPJson	typeref:typename:[]byte
+GetJsonBody	tcp_server/http_request.go	/^func (h HTTPData) GetJsonBody() []byte {$/;"	f	struct:tcp_server.HTTPData	typeref:typename:[]byte
+GetURL	tcp_server/http_request.go	/^		GetURL() string$/;"	n	interface:tcp_server.HTTPParams	typeref:typename:string
+GetURL	tcp_server/http_request.go	/^func (h HTTPData) GetURL() string {$/;"	f	struct:tcp_server.HTTPData	typeref:typename:string
+HTTPData	tcp_server/http_request.go	/^	HTTPData struct {$/;"	s	package:tcp_server
+HTTPJson	tcp_server/http_request.go	/^	HTTPJson interface {$/;"	i	package:tcp_server
+HTTPParams	tcp_server/http_request.go	/^	HTTPParams interface {$/;"	i	package:tcp_server
+Handle	tcp_server/server.go	/^func Handle(conn net.Conn) {$/;"	f	package:tcp_server
+IsWorking	tcp_server/server.go	/^	IsWorking bool   `json:"is_working,string"`$/;"	m	struct:tcp_server.Message	typeref:typename:bool
+Message	tcp_server/server.go	/^type Message struct {$/;"	s	package:tcp_server
+NewConnHTTP	tcp_server/http_request.go	/^func NewConnHTTP(conn net.Conn) ConnHTTP {$/;"	f	package:tcp_server	typeref:typename:ConnHTTP
+NewHTTPRequest	tcp_server/http_request.go	/^func NewHTTPRequest(data []byte) HTTPData {$/;"	f	package:tcp_server	typeref:typename:HTTPData
+Value	tcp_server/server.go	/^	Value     string `json:"value"`$/;"	m	struct:tcp_server.Message	typeref:typename:string
+main	cmd/main.go	/^func main() {$/;"	f	package:main
+main	cmd/main.go	/^package main$/;"	p
+networkType	cmd/main.go	/^	networkType = "tcp"$/;"	c	package:main
+server	cmd/main.go	/^	server "github.com\/marcos-dev88\/go-tcp-study\/tcp_server"$/;"	P	package:github.com/marcos-dev88/go-tcp-study/tcp_server
+streamPort	cmd/main.go	/^	streamPort  = ":9000"$/;"	c	package:main
+tcp_server	tcp_server/http_request.go	/^package tcp_server$/;"	p
+tcp_server	tcp_server/server.go	/^package tcp_server$/;"	p
